@@ -88,43 +88,46 @@ const TERRITORIES = [
   { key: 'Brugh', label: 'Brugh Territory', url: 'https://seanhughley12.github.io/CHR.Polaris.Sriva/' },
 ];
 
-/* ─── ACCOUNT DATA (maintained by the refresh-twin from msx_opp_cache + strategy pages) ───
-   The MSX solution value is the BILLED amount for the co-term months (billedMonths),
-   NOT an annual figure. monthly = billedValue / billedMonths.
-   Quota retirement = monthly * quotaMonths (co-term months + the full 12-mo renewal
-   that retires in-period at the anniversary / mid-term). Confirm months per account in MSX. */
+/* ─── ACCOUNT DATA — billed value + months pulled from MSX solution line items ───
+   billedValue = sum of extendedamount (what MSX shows).
+   billedMonths = extendedamount / baseamount (baseamount = qty × priceperunit = monthly). Exact.
+   Quota retirement by deal type:
+     Anniversary: billed + 12 IF the anniversary lands in the current fiscal year (FY27 ends 6/30/27); else billed.
+     Mid-term:    12 (mid-term credit trues up to a full year).
+     Renewal:     billed (= 12).
+   Refresh-twin recomputes these from MSX each run; Sean confirms the anniversary once. */
 const fmt = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : '$' + Math.round(n / 1e3) + 'K';
 const accounts = [
   {
     key: 'autoliv', name: 'Autoliv', brand: '#005495', live: true, href: 'autoliv/',
     headline: 'Driving to a December 1 E7 execution for 80%+ of the workforce.',
-    confidence: 'yellow',
-    billedValue: 1374504, billedMonths: 4, quotaMonths: 16, anniversary: 'Apr 2027',
-    seats: '18,080', close: 'Dec 1',
+    confidence: 'yellow', dealType: 'Anniversary',
+    billedValue: 1374504, billedMonths: 5, quotaMonths: 17, anniversary: 'May 2027 (FY27)',
+    seats: '18,080', close: 'Dec 22',
     next: 'Walk Horia through the E7 financials', nextBy: 'Oct 8',
   },
   {
     key: 'smiths', name: 'Smiths', brand: '#0a2540', live: false,
-    headline: 'E7 step-up (mid-term). Strategy page in build.',
-    confidence: 'pending',
-    billedValue: 761319, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
-    seats: 'TBD', close: 'Jan 1',
+    headline: 'E7 step-up, mid-term credit trues up to a full year of quota.',
+    confidence: 'pending', dealType: 'Mid-term',
+    billedValue: 761319, billedMonths: 6, quotaMonths: 12, anniversary: 'Jul 2027',
+    seats: '12,050', close: 'Jan 1',
     next: 'Author strategy page', nextBy: '',
   },
   {
     key: 'echo', name: 'Echo Global', brand: '#00843d', live: false,
-    headline: 'E7 step-up (anniversary). Strategy page in build.',
-    confidence: 'pending',
-    billedValue: 510747, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
-    seats: 'TBD', close: 'Apr 1',
+    headline: 'E7 step-up, full-year term to the April 2028 anniversary.',
+    confidence: 'pending', dealType: 'Anniversary',
+    billedValue: 510747, billedMonths: 12, quotaMonths: 12, anniversary: 'Apr 2028 (FY28)',
+    seats: '4,042', close: 'Apr 1',
     next: 'Author strategy page', nextBy: '',
   },
   {
     key: 'harley', name: 'Harley-Davidson', brand: '#f6861f', live: false,
-    headline: 'E7 step-up (renewal). Strategy page in build.',
-    confidence: 'pending',
+    headline: 'E7 step-up landing at renewal — full 12 months billed and retired.',
+    confidence: 'pending', dealType: 'Renewal',
     billedValue: 342000, billedMonths: 12, quotaMonths: 12, anniversary: 'at renewal',
-    seats: 'TBD', close: 'May 1',
+    seats: '6,000', close: 'May 1',
     next: 'Author strategy page', nextBy: '',
   },
 ];
@@ -158,12 +161,12 @@ function AccountCard({ a }) {
         <div className="money-cell billed">
           <div className="money-lbl">Billed</div>
           <div className="money-val">{billed}</div>
-          <div className="money-sub">{a.billedMonths != null ? `${a.billedMonths} mo to ${a.anniversary === 'at renewal' ? 'renewal' : a.anniversary}` : 'confirm timing'}</div>
+          <div className="money-sub">{a.billedMonths != null ? `${a.billedMonths} mo co-term` : 'confirm'}</div>
         </div>
         <div className="money-cell quota">
           <div className="money-lbl">Quota Retirement</div>
           <div className="money-val">{quota}</div>
-          <div className="money-sub">{a.quotaMonths != null ? `${a.quotaMonths} mo retired` : 'confirm timing'}</div>
+          <div className="money-sub">{a.quotaMonths != null ? `${a.quotaMonths} mo · ${a.dealType}` : 'confirm'}</div>
         </div>
       </div>
       <div className="acct-metrics">
