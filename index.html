@@ -102,8 +102,8 @@ const accounts = [
     key: 'autoliv', name: 'Autoliv', brand: '#005495', live: true, href: 'autoliv/',
     headline: 'Driving to a December 1 E7 execution for 80%+ of the workforce.',
     confidence: 'yellow', dealType: 'Anniversary',
-    billedValue: 1374504, billedMonths: 5, quotaMonths: 17, anniversary: 'May 2027 (FY27)',
-    seats: '18,080', close: 'Dec 22',
+    billedValue: 1374504, billedMonths: 4, quotaMonths: 16, anniversary: 'Apr 2027 (FY27)',
+    seats: '18,080', close: 'Dec 1',
     next: 'Walk Horia through the E7 financials', nextBy: 'Oct 8',
   },
   {
@@ -131,6 +131,11 @@ const accounts = [
     next: 'Author strategy page', nextBy: '',
   },
 ];
+
+/* ─── TERRITORY E7 QUOTA (target) ───
+   Quota/target is an MSXi scorecard allocation, not derivable from opportunity data.
+   Enter the territory's E7 target here (annualized $). null until Sean confirms. */
+const E7_QUOTA = null; // e.g. 6000000 for $6M
 
 function Switcher() {
   const go = (e) => { const t = TERRITORIES.find((x) => x.key === e.target.value); if (t && t.url !== '.') window.location.href = t.url; };
@@ -186,7 +191,8 @@ function App() {
   const liveCount = accounts.filter((a) => a.live).length;
   const totalBilled = accounts.reduce((t, a) => t + (a.billedValue || 0), 0);
   const totalQuota = accounts.reduce((t, a) => t + (a.billedMonths && a.quotaMonths != null ? (a.billedValue / a.billedMonths) * a.quotaMonths : 0), 0);
-  const anyTbd = accounts.some((a) => a.billedMonths == null);
+  const coverage = E7_QUOTA ? Math.round((totalQuota / E7_QUOTA) * 100) : null;
+  const gap = E7_QUOTA ? E7_QUOTA - totalQuota : null;
   return (
     <>
       <div className="top">
@@ -199,9 +205,9 @@ function App() {
         <p>E7 and Copilot strategy across the pod. Pick an account to see the executive summary, execution plan, stakeholders, and pipeline — grounded in live CRM and meeting signal.</p>
       </div>
       <div className="rollup">
-        <div className="rollup-stat"><div className="lbl">Accounts</div><div className="val">{accounts.length}</div><div className="sub">E7 target accounts</div></div>
-        <div className="rollup-stat"><div className="lbl">Billed (near-term)</div><div className="val">{fmt(totalBilled)}</div><div className="sub">{anyTbd ? 'confirmed accounts' : 'pod total'}</div></div>
-        <div className="rollup-stat highlight"><div className="lbl">Quota Retirement</div><div className="val">{fmt(totalQuota)}</div><div className="sub">includes renewals that retire in-period</div></div>
+        <div className="rollup-stat"><div className="lbl">E7 Quota (target)</div><div className="val">{E7_QUOTA ? fmt(E7_QUOTA) : 'Set target'}</div><div className="sub">{E7_QUOTA ? 'territory E7 target' : 'from MSXi scorecard'}</div></div>
+        <div className="rollup-stat highlight"><div className="lbl">Quota Retirement</div><div className="val">{fmt(totalQuota)}</div><div className="sub">{coverage != null ? `${coverage}% of quota covered` : 'includes renewals that retire in-period'}</div></div>
+        <div className="rollup-stat"><div className="lbl">{gap != null && gap > 0 ? 'Gap to Target' : 'Billed (near-term)'}</div><div className="val">{gap != null && gap > 0 ? fmt(gap) : fmt(totalBilled)}</div><div className="sub">{gap != null && gap > 0 ? 'still to close' : 'invoiced near-term'}</div></div>
         <div className="rollup-stat"><div className="lbl">Nearest Close</div><div className="val">Dec 1</div><div className="sub">Autoliv execution</div></div>
       </div>
       <div className="accounts">
