@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hesse Territory · E7 & Copilot Strategy</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a2540;--navy-deep:#061a30;--blue:#0078d4;--blue-soft:#e6f0fb;--gold:#d4a843;
+  --ink:#16202e;--muted:#5a6b82;--border:#e2e8f1;--surface:#fff;--bg:#f4f7fb;
+  --green:#1a9c5b;--amber:#e0962a;--red:#d1472c;
+  --radius:14px;--shadow:0 2px 14px rgba(10,37,64,.07);--shadow-lg:0 12px 40px rgba(10,37,64,.14);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+.top{position:sticky;top:0;z-index:50;background:rgba(10,37,64,.98);backdrop-filter:blur(10px);color:#fff;padding:0 40px;height:62px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(0,0,0,.18)}
+.top-brand{display:flex;align-items:center;gap:14px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;letter-spacing:.2px}
+.top-brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.switcher{display:flex;align-items:center;gap:8px;font-size:13px}
+.switcher label{color:rgba(255,255,255,.6);font-weight:500;margin-right:2px}
+.switcher select{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
+.switcher select option{color:#16202e}
+.hero{max-width:1200px;margin:0 auto;padding:52px 40px 20px}
+.hero-eyebrow{font-size:12px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:12px}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;letter-spacing:-1px;color:var(--navy);margin-bottom:10px}
+.hero p{font-size:16px;color:var(--muted);max-width:60ch}
+.rollup{max-width:1200px;margin:0 auto;padding:12px 40px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.rollup-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow)}
+.rollup-stat .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700}
+.rollup-stat .val{font-family:'Space Grotesk',sans-serif;font-size:27px;font-weight:700;color:var(--navy);margin-top:4px}
+.rollup-stat .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.accounts{max-width:1200px;margin:0 auto;padding:28px 40px 60px}
+.accounts-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+.accounts-head h2{font-family:'Space Grotesk',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:700}
+.accounts-head .note{font-size:12.5px;color:var(--muted)}
+.acct-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.acct-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s,border-color .18s;position:relative;overflow:hidden}
+.acct-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--brand,var(--blue))}
+.acct-card.live:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--brand,var(--blue))}
+.acct-card.pending{opacity:.92}
+.acct-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.acct-name{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--navy)}
+.conf{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 11px;border-radius:999px}
+.conf.green{background:rgba(26,156,91,.14);color:var(--green)}
+.conf.yellow{background:rgba(224,150,42,.16);color:var(--amber)}
+.conf.red{background:rgba(209,71,44,.14);color:var(--red)}
+.conf.pending{background:#eef2f7;color:var(--muted)}
+.acct-headline{font-size:15px;line-height:1.5;color:var(--ink);font-weight:500;margin-bottom:18px;min-height:46px}
+.acct-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:16px}
+.acct-metric .m-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}
+.acct-metric .m-val{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--navy);margin-top:3px}
+.acct-next{font-size:13.5px;color:var(--muted);margin-bottom:16px}
+.acct-next b{color:var(--ink);font-weight:600}
+.acct-cta{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
+.acct-cta .go{font-size:14px;font-weight:700;color:var(--brand,var(--blue))}
+.acct-cta .pending-tag{font-size:12.5px;color:var(--muted);font-style:italic}
+.foot{max-width:1200px;margin:0 auto;padding:0 40px 50px;color:var(--muted);font-size:12.5px}
+@media(max-width:820px){.rollup,.acct-grid{grid-template-columns:1fr 1fr}.accounts,.hero,.rollup{padding-left:22px;padding-right:22px}.hero h1{font-size:30px}}
+@media(max-width:560px){.rollup,.acct-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState } = React;
+
+/* ─── TERRITORY CONFIG ─── */
+const TERRITORY = 'Hesse';
+const TERRITORIES = [
+  { key: 'Hesse', label: 'Hesse Territory', url: '.' },
+  { key: 'Martel', label: 'Martel Territory', url: 'https://seanhughley12.github.io/MSC/' },
+  { key: 'Brugh', label: 'Brugh Territory', url: 'https://seanhughley12.github.io/CHR.Polaris.Sriva/' },
+];
+
+/* ─── ACCOUNT DATA (maintained by the refresh-twin from msx_opp_cache + strategy pages) ─── */
+const accounts = [
+  {
+    key: 'autoliv', name: 'Autoliv', brand: '#005495', live: true, href: 'autoliv/',
+    headline: 'Driving to a December 1 E7 execution for 80%+ of the workforce.',
+    confidence: 'yellow',
+    revenue: '$1.37M', seats: '18,080', close: 'Dec 1',
+    next: 'Walk Horia through the E7 financials', nextBy: 'Oct 8',
+  },
+  {
+    key: 'smiths', name: 'Smiths', brand: '#0a2540', live: false,
+    headline: 'E7 step-up (mid-term). Strategy page in build.',
+    confidence: 'pending',
+    revenue: '$761K', seats: 'TBD', close: 'Jan 1',
+    next: 'Author strategy page', nextBy: '',
+  },
+  {
+    key: 'echo', name: 'Echo Global', brand: '#00843d', live: false,
+    headline: 'E7 step-up (anniversary). Strategy page in build.',
+    confidence: 'pending',
+    revenue: '$511K', seats: 'TBD', close: 'Apr 1',
+    next: 'Author strategy page', nextBy: '',
+  },
+  {
+    key: 'harley', name: 'Harley-Davidson', brand: '#f6861f', live: false,
+    headline: 'E7 step-up (renewal). Strategy page in build.',
+    confidence: 'pending',
+    revenue: '$342K', seats: 'TBD', close: 'May 1',
+    next: 'Author strategy page', nextBy: '',
+  },
+];
+
+function Switcher() {
+  const go = (e) => { const t = TERRITORIES.find((x) => x.key === e.target.value); if (t && t.url !== '.') window.location.href = t.url; };
+  return (
+    <div className="switcher">
+      <label>Territory</label>
+      <select value={TERRITORY} onChange={go}>
+        {TERRITORIES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function AccountCard({ a }) {
+  const Tag = a.live ? 'a' : 'div';
+  const props = a.live ? { href: a.href } : {};
+  return (
+    <Tag className={`acct-card ${a.live ? 'live' : 'pending'}`} style={{ '--brand': a.brand }} {...props}>
+      <div className="acct-top">
+        <div className="acct-name">{a.name}</div>
+        <span className={`conf ${a.confidence}`}>{a.confidence === 'pending' ? 'In build' : a.confidence}</span>
+      </div>
+      <div className="acct-headline">{a.headline}</div>
+      <div className="acct-metrics">
+        <div className="acct-metric"><div className="m-lbl">E7 Pipeline</div><div className="m-val">{a.revenue}</div></div>
+        <div className="acct-metric"><div className="m-lbl">Net New Seats</div><div className="m-val">{a.seats}</div></div>
+        <div className="acct-metric"><div className="m-lbl">Close</div><div className="m-val">{a.close}</div></div>
+      </div>
+      <div className="acct-next"><b>Next:</b> {a.next}{a.nextBy ? ` · by ${a.nextBy}` : ''}</div>
+      <div className="acct-cta">
+        {a.live ? <span className="go">Open strategy →</span> : <span className="pending-tag">Strategy page coming</span>}
+      </div>
+    </Tag>
+  );
+}
+
+function App() {
+  const liveCount = accounts.filter((a) => a.live).length;
+  return (
+    <>
+      <div className="top">
+        <div className="top-brand"><span className="mark">H</span> E7 &amp; Copilot Strategy</div>
+        <Switcher />
+      </div>
+      <div className="hero">
+        <div className="hero-eyebrow">Hesse Territory · Internal</div>
+        <h1>Hesse Territory</h1>
+        <p>E7 and Copilot strategy across the pod. Pick an account to see the executive summary, execution plan, stakeholders, and pipeline — grounded in live CRM and meeting signal.</p>
+      </div>
+      <div className="rollup">
+        <div className="rollup-stat"><div className="lbl">Accounts</div><div className="val">{accounts.length}</div><div className="sub">E7 target accounts</div></div>
+        <div className="rollup-stat"><div className="lbl">E7 Pipeline</div><div className="val">$2.99M</div><div className="sub">across the pod</div></div>
+        <div className="rollup-stat"><div className="lbl">Nearest Close</div><div className="val">Dec 1</div><div className="sub">Autoliv execution</div></div>
+        <div className="rollup-stat"><div className="lbl">Strategy Pages Live</div><div className="val">{liveCount} / {accounts.length}</div><div className="sub">rest in build</div></div>
+      </div>
+      <div className="accounts">
+        <div className="accounts-head">
+          <h2>Accounts</h2>
+          <span className="note">Click a live account to open its strategy page</span>
+        </div>
+        <div className="acct-grid">
+          {accounts.map((a) => <AccountCard key={a.key} a={a} />)}
+        </div>
+      </div>
+      <div className="foot">Internal Microsoft strategy. Pipeline from MSX; executive narrative maintained by the Strategy Portal refresh-twin. Not for external distribution.</div>
+    </>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
