@@ -89,16 +89,17 @@ const TERRITORIES = [
 ];
 
 /* ─── ACCOUNT DATA (maintained by the refresh-twin from msx_opp_cache + strategy pages) ───
-   Billed vs Quota Retirement differ by timing: seats co-term to the anniversary, so
-   billed = monthly * months-to-anniversary, but the full renewal retires at the anniversary.
-   monthly = 12-month ACV / 12.  Confirm per-account anniversary + months with Sean. */
+   The MSX solution value is the BILLED amount for the co-term months (billedMonths),
+   NOT an annual figure. monthly = billedValue / billedMonths.
+   Quota retirement = monthly * quotaMonths (co-term months + the full 12-mo renewal
+   that retires in-period at the anniversary / mid-term). Confirm months per account in MSX. */
 const fmt = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : '$' + Math.round(n / 1e3) + 'K';
 const accounts = [
   {
     key: 'autoliv', name: 'Autoliv', brand: '#005495', live: true, href: 'autoliv/',
     headline: 'Driving to a December 1 E7 execution for 80%+ of the workforce.',
     confidence: 'yellow',
-    acv: 1374504, billedMonths: 4, quotaMonths: 16, anniversary: 'Apr 2027',
+    billedValue: 1374504, billedMonths: 4, quotaMonths: 16, anniversary: 'Apr 2027',
     seats: '18,080', close: 'Dec 1',
     next: 'Walk Horia through the E7 financials', nextBy: 'Oct 8',
   },
@@ -106,7 +107,7 @@ const accounts = [
     key: 'smiths', name: 'Smiths', brand: '#0a2540', live: false,
     headline: 'E7 step-up (mid-term). Strategy page in build.',
     confidence: 'pending',
-    acv: 761319, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
+    billedValue: 761319, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
     seats: 'TBD', close: 'Jan 1',
     next: 'Author strategy page', nextBy: '',
   },
@@ -114,7 +115,7 @@ const accounts = [
     key: 'echo', name: 'Echo Global', brand: '#00843d', live: false,
     headline: 'E7 step-up (anniversary). Strategy page in build.',
     confidence: 'pending',
-    acv: 510747, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
+    billedValue: 510747, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
     seats: 'TBD', close: 'Apr 1',
     next: 'Author strategy page', nextBy: '',
   },
@@ -122,7 +123,7 @@ const accounts = [
     key: 'harley', name: 'Harley-Davidson', brand: '#f6861f', live: false,
     headline: 'E7 step-up (renewal). Strategy page in build.',
     confidence: 'pending',
-    acv: 342000, billedMonths: 12, quotaMonths: 12, anniversary: 'at renewal',
+    billedValue: 342000, billedMonths: 12, quotaMonths: 12, anniversary: 'at renewal',
     seats: 'TBD', close: 'May 1',
     next: 'Author strategy page', nextBy: '',
   },
@@ -143,9 +144,9 @@ function Switcher() {
 function AccountCard({ a }) {
   const Tag = a.live ? 'a' : 'div';
   const props = a.live ? { href: a.href } : {};
-  const monthly = a.acv / 12;
-  const billed = a.billedMonths != null ? fmt(monthly * a.billedMonths) : '—';
-  const quota = a.quotaMonths != null ? fmt(monthly * a.quotaMonths) : '—';
+  const monthly = a.billedMonths ? a.billedValue / a.billedMonths : null;
+  const billed = fmt(a.billedValue);
+  const quota = (monthly != null && a.quotaMonths != null) ? fmt(monthly * a.quotaMonths) : '—';
   return (
     <Tag className={`acct-card ${a.live ? 'live' : 'pending'}`} style={{ '--brand': a.brand }} {...props}>
       <div className="acct-top">
@@ -166,7 +167,7 @@ function AccountCard({ a }) {
         </div>
       </div>
       <div className="acct-metrics">
-        <div className="acct-metric"><div className="m-lbl">12-mo ACV</div><div className="m-val">{fmt(a.acv)}</div></div>
+        <div className="acct-metric"><div className="m-lbl">Billed Term</div><div className="m-val">{a.billedMonths != null ? a.billedMonths + ' mo' : 'TBD'}</div></div>
         <div className="acct-metric"><div className="m-lbl">Net New Seats</div><div className="m-val">{a.seats}</div></div>
         <div className="acct-metric"><div className="m-lbl">Close</div><div className="m-val">{a.close}</div></div>
       </div>
@@ -180,9 +181,8 @@ function AccountCard({ a }) {
 
 function App() {
   const liveCount = accounts.filter((a) => a.live).length;
-  const sum = (mk) => accounts.reduce((t, a) => t + (a[mk] != null ? (a.acv / 12) * a[mk] : 0), 0);
-  const totalBilled = sum('billedMonths');
-  const totalQuota = sum('quotaMonths');
+  const totalBilled = accounts.reduce((t, a) => t + (a.billedValue || 0), 0);
+  const totalQuota = accounts.reduce((t, a) => t + (a.billedMonths && a.quotaMonths != null ? (a.billedValue / a.billedMonths) * a.quotaMonths : 0), 0);
   const anyTbd = accounts.some((a) => a.billedMonths == null);
   return (
     <>
@@ -196,10 +196,10 @@ function App() {
         <p>E7 and Copilot strategy across the pod. Pick an account to see the executive summary, execution plan, stakeholders, and pipeline — grounded in live CRM and meeting signal.</p>
       </div>
       <div className="rollup">
+        <div className="rollup-stat"><div className="lbl">Accounts</div><div className="val">{accounts.length}</div><div className="sub">E7 target accounts</div></div>
         <div className="rollup-stat"><div className="lbl">Billed (near-term)</div><div className="val">{fmt(totalBilled)}</div><div className="sub">{anyTbd ? 'confirmed accounts' : 'pod total'}</div></div>
-        <div className="rollup-stat highlight"><div className="lbl">Quota Retirement</div><div className="val">{fmt(totalQuota)}</div><div className="sub">anniversary renewals retire in-period</div></div>
+        <div className="rollup-stat highlight"><div className="lbl">Quota Retirement</div><div className="val">{fmt(totalQuota)}</div><div className="sub">includes renewals that retire in-period</div></div>
         <div className="rollup-stat"><div className="lbl">Nearest Close</div><div className="val">Dec 1</div><div className="sub">Autoliv execution</div></div>
-        <div className="rollup-stat"><div className="lbl">Strategy Pages Live</div><div className="val">{liveCount} / {accounts.length}</div><div className="sub">rest in build</div></div>
       </div>
       <div className="accounts">
         <div className="accounts-head">
