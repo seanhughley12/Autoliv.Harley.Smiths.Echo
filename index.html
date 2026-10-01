@@ -47,7 +47,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .conf.red{background:rgba(209,71,44,.14);color:var(--red)}
 .conf.pending{background:#eef2f7;color:var(--muted)}
 .acct-headline{font-size:15px;line-height:1.5;color:var(--ink);font-weight:500;margin-bottom:18px;min-height:46px}
-.acct-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:16px}
+.rollup-stat.highlight{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-color:transparent}
+.rollup-stat.highlight .lbl{color:rgba(255,255,255,.7)}
+.rollup-stat.highlight .val{color:#fff}
+.rollup-stat.highlight .sub{color:rgba(255,255,255,.75)}
+.acct-money{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.money-cell{border-radius:10px;padding:14px 16px;border:1px solid var(--border)}
+.money-cell.billed{background:var(--bg)}
+.money-cell.quota{background:var(--blue-soft);border-color:rgba(0,120,212,.25)}
+.money-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--muted)}
+.money-cell.quota .money-lbl{color:var(--blue)}
+.money-val{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:var(--navy);margin-top:3px;line-height:1.1}
+.money-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.acct-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:16px}
 .acct-metric .m-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}
 .acct-metric .m-val{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--navy);margin-top:3px}
 .acct-next{font-size:13.5px;color:var(--muted);margin-bottom:16px}
@@ -76,34 +88,42 @@ const TERRITORIES = [
   { key: 'Brugh', label: 'Brugh Territory', url: 'https://seanhughley12.github.io/CHR.Polaris.Sriva/' },
 ];
 
-/* ─── ACCOUNT DATA (maintained by the refresh-twin from msx_opp_cache + strategy pages) ─── */
+/* ─── ACCOUNT DATA (maintained by the refresh-twin from msx_opp_cache + strategy pages) ───
+   Billed vs Quota Retirement differ by timing: seats co-term to the anniversary, so
+   billed = monthly * months-to-anniversary, but the full renewal retires at the anniversary.
+   monthly = 12-month ACV / 12.  Confirm per-account anniversary + months with Sean. */
+const fmt = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : '$' + Math.round(n / 1e3) + 'K';
 const accounts = [
   {
     key: 'autoliv', name: 'Autoliv', brand: '#005495', live: true, href: 'autoliv/',
     headline: 'Driving to a December 1 E7 execution for 80%+ of the workforce.',
     confidence: 'yellow',
-    revenue: '$1.37M', seats: '18,080', close: 'Dec 1',
+    acv: 1374504, billedMonths: 4, quotaMonths: 16, anniversary: 'Apr 2027',
+    seats: '18,080', close: 'Dec 1',
     next: 'Walk Horia through the E7 financials', nextBy: 'Oct 8',
   },
   {
     key: 'smiths', name: 'Smiths', brand: '#0a2540', live: false,
     headline: 'E7 step-up (mid-term). Strategy page in build.',
     confidence: 'pending',
-    revenue: '$761K', seats: 'TBD', close: 'Jan 1',
+    acv: 761319, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
+    seats: 'TBD', close: 'Jan 1',
     next: 'Author strategy page', nextBy: '',
   },
   {
     key: 'echo', name: 'Echo Global', brand: '#00843d', live: false,
     headline: 'E7 step-up (anniversary). Strategy page in build.',
     confidence: 'pending',
-    revenue: '$511K', seats: 'TBD', close: 'Apr 1',
+    acv: 510747, billedMonths: null, quotaMonths: null, anniversary: 'confirm',
+    seats: 'TBD', close: 'Apr 1',
     next: 'Author strategy page', nextBy: '',
   },
   {
     key: 'harley', name: 'Harley-Davidson', brand: '#f6861f', live: false,
     headline: 'E7 step-up (renewal). Strategy page in build.',
     confidence: 'pending',
-    revenue: '$342K', seats: 'TBD', close: 'May 1',
+    acv: 342000, billedMonths: 12, quotaMonths: 12, anniversary: 'at renewal',
+    seats: 'TBD', close: 'May 1',
     next: 'Author strategy page', nextBy: '',
   },
 ];
@@ -123,6 +143,9 @@ function Switcher() {
 function AccountCard({ a }) {
   const Tag = a.live ? 'a' : 'div';
   const props = a.live ? { href: a.href } : {};
+  const monthly = a.acv / 12;
+  const billed = a.billedMonths != null ? fmt(monthly * a.billedMonths) : '—';
+  const quota = a.quotaMonths != null ? fmt(monthly * a.quotaMonths) : '—';
   return (
     <Tag className={`acct-card ${a.live ? 'live' : 'pending'}`} style={{ '--brand': a.brand }} {...props}>
       <div className="acct-top">
@@ -130,8 +153,20 @@ function AccountCard({ a }) {
         <span className={`conf ${a.confidence}`}>{a.confidence === 'pending' ? 'In build' : a.confidence}</span>
       </div>
       <div className="acct-headline">{a.headline}</div>
+      <div className="acct-money">
+        <div className="money-cell billed">
+          <div className="money-lbl">Billed</div>
+          <div className="money-val">{billed}</div>
+          <div className="money-sub">{a.billedMonths != null ? `${a.billedMonths} mo to ${a.anniversary === 'at renewal' ? 'renewal' : a.anniversary}` : 'confirm timing'}</div>
+        </div>
+        <div className="money-cell quota">
+          <div className="money-lbl">Quota Retirement</div>
+          <div className="money-val">{quota}</div>
+          <div className="money-sub">{a.quotaMonths != null ? `${a.quotaMonths} mo retired` : 'confirm timing'}</div>
+        </div>
+      </div>
       <div className="acct-metrics">
-        <div className="acct-metric"><div className="m-lbl">E7 Pipeline</div><div className="m-val">{a.revenue}</div></div>
+        <div className="acct-metric"><div className="m-lbl">12-mo ACV</div><div className="m-val">{fmt(a.acv)}</div></div>
         <div className="acct-metric"><div className="m-lbl">Net New Seats</div><div className="m-val">{a.seats}</div></div>
         <div className="acct-metric"><div className="m-lbl">Close</div><div className="m-val">{a.close}</div></div>
       </div>
@@ -145,6 +180,10 @@ function AccountCard({ a }) {
 
 function App() {
   const liveCount = accounts.filter((a) => a.live).length;
+  const sum = (mk) => accounts.reduce((t, a) => t + (a[mk] != null ? (a.acv / 12) * a[mk] : 0), 0);
+  const totalBilled = sum('billedMonths');
+  const totalQuota = sum('quotaMonths');
+  const anyTbd = accounts.some((a) => a.billedMonths == null);
   return (
     <>
       <div className="top">
@@ -157,21 +196,21 @@ function App() {
         <p>E7 and Copilot strategy across the pod. Pick an account to see the executive summary, execution plan, stakeholders, and pipeline — grounded in live CRM and meeting signal.</p>
       </div>
       <div className="rollup">
-        <div className="rollup-stat"><div className="lbl">Accounts</div><div className="val">{accounts.length}</div><div className="sub">E7 target accounts</div></div>
-        <div className="rollup-stat"><div className="lbl">E7 Pipeline</div><div className="val">$2.99M</div><div className="sub">across the pod</div></div>
+        <div className="rollup-stat"><div className="lbl">Billed (near-term)</div><div className="val">{fmt(totalBilled)}</div><div className="sub">{anyTbd ? 'confirmed accounts' : 'pod total'}</div></div>
+        <div className="rollup-stat highlight"><div className="lbl">Quota Retirement</div><div className="val">{fmt(totalQuota)}</div><div className="sub">anniversary renewals retire in-period</div></div>
         <div className="rollup-stat"><div className="lbl">Nearest Close</div><div className="val">Dec 1</div><div className="sub">Autoliv execution</div></div>
         <div className="rollup-stat"><div className="lbl">Strategy Pages Live</div><div className="val">{liveCount} / {accounts.length}</div><div className="sub">rest in build</div></div>
       </div>
       <div className="accounts">
         <div className="accounts-head">
           <h2>Accounts</h2>
-          <span className="note">Click a live account to open its strategy page</span>
+          <span className="note">Billed = invoiced to anniversary · Quota retirement includes the renewal that retires in-period</span>
         </div>
         <div className="acct-grid">
           {accounts.map((a) => <AccountCard key={a.key} a={a} />)}
         </div>
       </div>
-      <div className="foot">Internal Microsoft strategy. Pipeline from MSX; executive narrative maintained by the Strategy Portal refresh-twin. Not for external distribution.</div>
+      <div className="foot">Internal Microsoft strategy. Pipeline from MSX; billed vs quota-retirement derived from close date and anniversary timing (confirm per account). Executive narrative maintained by the Strategy Portal refresh-twin. Not for external distribution.</div>
     </>
   );
 }
